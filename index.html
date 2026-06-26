@@ -4311,46 +4311,69 @@ function viewAssignmentContent(id){
 /* ── Print helpers — open popup window so SPA layout doesn't block printing ── */
 function printWindow(title, bodyHtml) {
   var MJAX = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js';
-  var MJCFG = 'window.MathJax={tex:{inlineMath:[["\\\\(","\\\\)"],["$","$"]],displayMath:[["\\\\[","\\\\]"],["$$","$$"]]},svg:{fontCache:"global"}};';
+  // MathJax config — processEscapes so \( \) are always recognised
+  var MJCFG = 'window.MathJax={tex:{inlineMath:[["\\\\(","\\\\)"],["$","$"]],displayMath:[["\\\\[","\\\\]"],["$$","$$"]],processEscapes:true},svg:{fontCache:"global"},options:{skipHtmlTags:["script","noscript","style","textarea"]}};';
   var w = window.open('', '_blank', 'width=960,height=820,scrollbars=yes');
-  if (!w) { showToast('⚠️ Allow pop-ups to print. Check your browser\'s address bar.'); return; }
+  if (!w) { showToast('⚠️ Allow pop-ups to print — check your browser address bar.'); return; }
   var S = 'script';
+  // NOTE: NO "async" — synchronous load ensures MathJax typesets BEFORE window.onload fires
   w.document.write('<!DOCTYPE html><html><head>'
     + '<meta charset="UTF-8"><title>' + title + '</title>'
     + '<' + S + '>' + MJCFG + '</' + S + '>'
-    + '<' + S + ' src="' + MJAX + '" id="MathJax-script" async></' + S + '>'
+    + '<' + S + ' src="' + MJAX + '" id="MathJax-script"></' + S + '>'
     + '<style>'
+    // Map all dark-theme CSS variables to print-safe light values
+    + ':root{'
+    + '--c1:#1a56db;--c2:#b45309;--c3:#166534;--c4:#92400e;--c5:#5b21b6;'
+    + '--bg0:#ffffff;--bg1:#f8f8f8;--bg2:#f0f0f0;--bg3:#e8e8e8;'
+    + '--bd:#cccccc;--bd2:#bbbbbb;'
+    + '--tx:#000000;--tx2:#333333;--tx3:#555555;--mt:#777777;'
+    + '--r:4px;--r2:6px;--nav:60px;'
+    + '}'
     + '*{box-sizing:border-box;margin:0;padding:0}'
-    + 'body{font-family:Arial,Helvetica,sans-serif;background:#fff;color:#000;font-size:12pt;line-height:1.8;padding:18mm 16mm}'
-    + 'h1,h2,h3{margin:16px 0 8px;font-weight:800}'
-    + 'h3{font-size:12pt;border-left:3px solid #333;padding:5px 12px;background:#f4f4f4}'
-    + 'p{margin:0 0 6px}'
+    + 'body{font-family:Arial,Helvetica,sans-serif;background:#fff;color:#000;font-size:12pt;line-height:1.9;padding:18mm 16mm}'
+    + 'h1,h2{margin:16px 0 8px;font-weight:800;font-size:14pt}'
+    + 'h3{font-size:12pt;font-weight:800;border-left:3px solid #444;padding:5px 12px;background:#f4f4f4;margin:14px 0 8px;color:#000}'
+    + 'p{margin:0 0 8px}'
     + 'ul,ol{padding-left:22px;margin:6px 0}'
     + 'li{margin:3px 0}'
-    + 'strong{font-weight:800}'
+    + 'strong{font-weight:800;color:#000}'
     + 'em{font-style:italic}'
+    + 'code{background:#f0f0f0;padding:1px 5px;border-radius:3px;font-size:11pt}'
     + 'table{width:100%;border-collapse:collapse;margin:10px 0}'
-    + 'th{background:#e8e8e8;font-weight:700;padding:7px 10px;border:1px solid #aaa;text-align:left;font-size:11pt}'
-    + 'td{padding:7px 10px;border:1px solid #ccc;font-size:11pt}'
-    + 'tr:nth-child(even) td{background:#fafafa}'
+    + 'th{background:#e0e0e0;font-weight:700;padding:7px 10px;border:1px solid #aaa;text-align:left;font-size:11pt;color:#000}'
+    + 'td{padding:7px 10px;border:1px solid #ccc;font-size:11pt;color:#000}'
+    + 'tr:nth-child(even) td{background:#f7f7f7}'
     + 'hr{border:none;border-top:1px solid #ccc;margin:12px 0}'
-    + 'button,.btn,.modal-x,.hbtn,.no-print{display:none!important}'
-    + 'mjx-container{font-size:1.05em}'
-    + 'mjx-container[display="true"]{display:block;margin:12px auto;text-align:center}'
-    + '[style*="var(--"]{color:#000!important;background:#fff!important;border-color:#ccc!important}'
-    + '.mk-output{color:#000!important}'
-    + '.mk-output h3{color:#111!important;background:#f4f4f4!important;border-color:#555!important}'
+    // Hide all interactive elements
+    + 'button,.btn,.modal-x,.hbtn,.no-print,.diff-btn,.action-chips,.chip{display:none!important}'
+    // MathJax rendering
+    + 'mjx-container{font-size:1.05em!important;color:#000!important}'
+    + 'mjx-container[display="true"]{display:block!important;margin:12px auto!important;text-align:center}'
+    // mk-output class — force black text, light backgrounds
+    + '.mk-output{color:#000!important;background:#fff!important}'
+    + '.mk-output h3{color:#000!important;background:#f4f4f4!important;border-color:#444!important}'
+    + '.mk-output p,.mk-output li,.mk-output td,.mk-output th{color:#000!important}'
+    // Inline styles that reference CSS vars will now resolve via :root definitions above
     + '@page{margin:15mm 12mm;size:A4}'
     + '@media print{body{padding:0}}'
     + '</style>'
     + '</head><body>'
     + '<div style="max-width:800px;margin:0 auto">' + bodyHtml + '</div>'
     + '<' + S + '>'
-    + 'window.onload=function(){'
-    + '  if(window.MathJax&&MathJax.typesetPromise){'
-    + '    MathJax.typesetPromise().then(function(){setTimeout(function(){window.print();},500);});'
-    + '  }else{setTimeout(function(){window.print();},1500);}'
-    + '};'
+    // MathJax was loaded synchronously above — startup.promise resolves after auto-typesetting
+    + 'var _pTries=0;'
+    + 'function _doPrint(){setTimeout(function(){window.print();},600);}'
+    + 'function _waitMJ(){'
+    + '  if(window.MathJax&&typeof MathJax.typesetPromise==="function"){'
+    + '    MathJax.typesetPromise().then(_doPrint).catch(_doPrint);'
+    + '  }else if(_pTries++<40){setTimeout(_waitMJ,300);}else{_doPrint();}'
+    + '}'
+    + 'if(window.MathJax&&MathJax.startup&&MathJax.startup.promise){'
+    + '  MathJax.startup.promise.then(_doPrint);'
+    + '}else{'
+    + '  _waitMJ();'
+    + '}'
     + '</' + S + '>'
     + '</body></html>');
   w.document.close();
