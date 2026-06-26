@@ -4309,7 +4309,7 @@ function viewAssignmentContent(id){
 }
 
 /* ── Print helpers — open popup window so SPA layout doesn't block printing ── */
-function printWindow(title, bodyHtml) {
+function printWindow(title, bodyHtml, extraCss) {
   var MJAX = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js';
   // MathJax config — processEscapes so \( \) are always recognised
   var MJCFG = 'window.MathJax={tex:{inlineMath:[["\\\\(","\\\\)"],["$","$"]],displayMath:[["\\\\[","\\\\]"],["$$","$$"]],processEscapes:true},svg:{fontCache:"global"},options:{skipHtmlTags:["script","noscript","style","textarea"]}};';
@@ -4357,6 +4357,7 @@ function printWindow(title, bodyHtml) {
     // Inline styles that reference CSS vars will now resolve via :root definitions above
     + '@page{margin:15mm 12mm;size:A4}'
     + '@media print{body{padding:0}}'
+    + (extraCss ? extraCss : '')
     + '</style>'
     + '</head><body>'
     + '<div style="max-width:800px;margin:0 auto">' + bodyHtml + '</div>'
@@ -5086,28 +5087,14 @@ function renderReports(){
 }
 
 function printStudentReport(card){
-  // Card is the .card div containing the report. Clone it for printing.
   const content=card?card.outerHTML:'<p>No report content.</p>';
-  const w=window.open('','_blank','width=900,height=700');
-  if(!w){showToast('⚠️ Allow popups to print');return;}
-  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Student Report — N³ Ncube</title>'
-    +'<sc\'+\'ript src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></sc\'+\'ript>'
-    +'<style>body{font-family:"Times New Roman",serif;font-size:12pt;color:#000;background:#fff;padding:30px 40px}'
-    +'.lvl{padding:2px 8px;border-radius:4px;font-size:10pt;font-weight:700;border:1px solid #ccc}'
-    +'.stat-grid{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0}'
-    +'.stat-card{flex:1;min-width:100px;border:1px solid #ccc;border-radius:6px;padding:10px;text-align:center}'
-    +'.stat-val{font-size:20pt;font-weight:900}'
-    +'.stat-lbl{font-size:9pt;color:#666}'
-    +'table{width:100%;border-collapse:collapse;margin:10px 0}'
-    +'th,td{border:1px solid #bbb;padding:6px 10px;font-size:10pt}'
-    +'th{background:#eee;font-weight:700}'
-    +'button{display:none!important}'
-    +'@media print{@page{margin:15mm 12mm;size:A4}}'
-    +'</style></head><body>'
-    +content
-    +'<sc\'+\'ript>window.onload=function(){setTimeout(function(){window.print();},800);}</sc\'+\'ript>'
-    +'</body></html>');
-  w.document.close();
+  printWindow('Student Report — N³ Ncube', content);
+}
+
+function printProfileReport(){
+  const el=document.getElementById('prof-ai-body');
+  if(!el||!el.innerHTML.trim()){showToast('⚠️ Generate the report first');return;}
+  printWindow('Academic Report — N³ Ncube', el.innerHTML);
 }
 
 function openStudentReport(email){
@@ -6137,57 +6124,33 @@ function toggleAsgnTheme(t){
 function downloadAssignmentPDF(id){
   const a=getAssignments().find(x=>x.id===id);
   if(!a){showToast('No content to download.');return;}
-  // PDF download — questions only, no memo/answers
-  function stripMemoFn(raw){
-    if(!raw) return '';
+  function _stripMemo(raw){
+    if(!raw)return'';
     const upper=raw.toUpperCase();
     const keywords=['MEMORANDUM','MODEL ANSWERS','MODEL ANSWER','MEMO'];
     let cutIdx=-1;
-    for(const kw of keywords){
-      const ki=upper.indexOf(kw);
-      if(ki>50){let ls=ki;while(ls>0&&raw[ls-1]!=='\n')ls--;if(cutIdx<0||ls<cutIdx)cutIdx=ls;}
-    }
+    for(const kw of keywords){const ki=upper.indexOf(kw);if(ki>50){let ls=ki;while(ls>0&&raw[ls-1]!=='\n')ls--;if(cutIdx<0||ls<cutIdx)cutIdx=ls;}}
     return cutIdx>0?raw.slice(0,cutIdx).trim():raw.trim();
   }
   let bodyHTML;
-  if(a.aiQuestionsHTML){
-    bodyHTML=a.aiQuestionsHTML;
-  } else if(a.aiContent){
-    bodyHTML=renderLive(stripMemoFn(a.aiContent));
-  } else if(a.aiContentHTML){
+  if(a.aiQuestionsHTML){bodyHTML=a.aiQuestionsHTML;}
+  else if(a.aiContent){bodyHTML=renderLive(_stripMemo(a.aiContent));}
+  else if(a.aiContentHTML){
     let h2=a.aiContentHTML;
     const pIdx=h2.search(/[^<]{0,5}(?:MEMORANDUM|MODEL ANSWER|═{3,})/i);
-    if(pIdx>0){let ts=pIdx;while(ts>0&&h2[ts]!=='<')ts--;bodyHTML=h2.slice(0,ts);}
-    else bodyHTML=h2;
-  } else if(a.questionText){
-    bodyHTML=renderLive(stripMemoFn(a.questionText));
-  } else {
-    bodyHTML='<p>No question content available.</p>';
-  }
-  const w=window.open('','_blank','width=900,height=700');
-  if(!w){showToast('⚠️ Allow popups to download PDF');return;}
-  const due=a.due?' &nbsp;|&nbsp; Due: '+a.due:'';
-  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>'+a.title+'</title>'
-    +'<sc\'+\'ript src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></sc\'+\'ript>'
-    +'<style>'
-    +'body{font-family:"Times New Roman",serif;font-size:13pt;line-height:1.9;color:#000;background:#fff;margin:0;padding:30px 40px}'
-    +'h1{font-size:18pt;text-align:center;margin:0 0 4px}'
-    +'.meta{text-align:center;font-size:11pt;color:#444;margin-bottom:18px;padding-bottom:12px;border-bottom:2px solid #000}'
-    +'.student-line{display:flex;gap:50px;font-size:11pt;margin-bottom:24px}'
-    +'h3{font-size:12pt;border-left:4px solid #333;padding:4px 10px;background:#f5f5f5;margin:16px 0 8px}'
-    +'table{width:100%;border-collapse:collapse;margin:10px 0}'
-    +'th,td{border:1px solid #bbb;padding:6px 10px;font-size:10.5pt}'
-    +'th{background:#eee;font-weight:700}'
-    +'@media print{button{display:none!important}@page{margin:18mm 15mm;size:A4}}'
-    +'</style></head><body>'
-    +'<div style="text-align:center;font-size:10pt;letter-spacing:2px;color:#555;margin-bottom:4px">N³ NCUBE HIGH SCHOOL</div>'
-    +'<h1>'+a.title+'</h1>'
-    +'<div class="meta">'+a.subject+' &nbsp;|&nbsp; Grade '+a.grade+' &nbsp;|&nbsp; Total: '+a.marks+' marks'+due+'</div>'
-    +'<div class="student-line"><span>Name: _________________________</span><span>Date: _____________</span></div>'
-    +bodyHTML
-    +'<sc\'+\'ript>window.onload=function(){setTimeout(function(){window.print();},800);}</sc\'+\'ript>'
-    +'</body></html>');
-  w.document.close();
+    if(pIdx>0){let ts=pIdx;while(ts>0&&h2[ts]!=='<')ts--;bodyHTML=h2.slice(0,ts);}else bodyHTML=h2;
+  }else if(a.questionText){bodyHTML=renderLive(_stripMemo(a.questionText));}
+  else{bodyHTML='<p>No question content available.</p>';}
+
+  const due=a.due?' | Due: '+a.due:'';
+  const paperHeader=
+    '<div style="text-align:center;font-size:10pt;letter-spacing:2px;color:#555;margin-bottom:4px">N³ NCUBE HIGH SCHOOL</div>'
+    +'<h1 style="text-align:center;font-size:18pt;font-weight:900;margin:0 0 6px">'+a.title+'</h1>'
+    +'<div style="text-align:center;font-size:11pt;color:#444;border-bottom:2px solid #000;padding-bottom:12px;margin-bottom:18px">'+a.subject+' &nbsp;|&nbsp; Grade '+a.grade+' &nbsp;|&nbsp; Total: '+a.marks+' marks'+due+'</div>'
+    +'<div style="display:flex;gap:50px;font-size:11pt;margin-bottom:28px"><span>Name: _________________________</span><span>Date: _____________</span></div>';
+
+  // Pass Times New Roman as extraCss — formal exam paper font
+  printWindow(a.title, paperHeader+bodyHTML, 'body,p,li,td,th{font-family:"Times New Roman",Times,serif}h1,h2,h3{font-family:"Times New Roman",Times,serif}');
 }
 
 function renderStudentAssignments(){
@@ -7059,7 +7022,7 @@ async function generateProfileAIReport(p, avg, lv, subjSummary){
     const rendered=renderLive(raw);
     body.innerHTML='<div style="line-height:1.9;font-size:12.5px">'+rendered+'</div>'
       +'<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--bd);display:flex;gap:8px;flex-wrap:wrap">'
-      +'<button class="btn btn-ghost btn-sm" onclick="window.print()">🖨 Print Report</button>'
+      +'<button class="btn btn-ghost btn-sm" onclick="printProfileReport()">🖨 Print Report</button>'
       +'<button class="btn btn-primary btn-sm" onclick="generateProfileAIReport(window._profData_p,window._profData_avg,window._profData_lv,window._profData_subj)">🔄 Regenerate</button>'
       +'</div>';
     window._profData_p=p;window._profData_avg=avg;window._profData_lv=lv;window._profData_subj=subjSummary;
