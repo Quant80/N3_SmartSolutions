@@ -8613,7 +8613,7 @@ function addBub(isU,txt,html=''){
     b.innerHTML=`<div class="t-blbl">You</div>${esc(txt)}`;
     // Mirror user message into expand view if open
     if(window._solExpandMode){
-      const eb=_tEl('sol-exp-body');
+      const eb=document.getElementById('sol-exp-body');
       if(eb){
         eb.innerHTML+='<hr class="sol-divider"><div class="sol-you">You</div><p>'+esc(txt)+'</p>'
           +'<div id="sol-exp-typing" style="color:var(--mt);padding:8px 0;letter-spacing:3px">•••</div>';
@@ -8624,9 +8624,9 @@ function addBub(isU,txt,html=''){
     b.innerHTML=html+'<button class="bub-expand" onclick="expandSolution(this)" title="Expand to full screen">⛶ Expand</button>';
     // Mirror AI response into expand view if open
     if(window._solExpandMode){
-      const eb=_tEl('sol-exp-body');
+      const eb=document.getElementById('sol-exp-body');
       if(eb){
-        _tEl('sol-exp-typing')?.remove();
+        document.getElementById('sol-exp-typing')?.remove();
         eb.innerHTML+='<div class="sol-ai" style="margin-top:12px">N³ AI</div>'+html;
         eb.scrollTop=eb.scrollHeight;
         if(window.MathJax?.typesetPromise)MathJax.typesetPromise([eb]).catch(function(){});
@@ -8658,8 +8658,9 @@ window._solExpandMode=false;
 function expandSolution(btn){
   const bub=btn.closest('.bub');
   if(!bub)return;
-  const eb=_tEl('sol-exp-body');
-  const overlay=_tEl('sol-expand');
+  // Always use document.getElementById — overlay is moved to body so _tEl won't find it
+  const overlay=document.getElementById('sol-expand');
+  const eb=document.getElementById('sol-exp-body');
   if(!eb||!overlay)return;
 
   // Snapshot canvas pixel data BEFORE cloning — cloneNode() loses all canvas pixels
@@ -8680,24 +8681,27 @@ function expandSolution(btn){
     cv.replaceWith(img);
   });
 
-  // Move clone's children into expand body (avoids serialising huge data-URLs via innerHTML)
+  // Move clone's children into expand body
   eb.innerHTML='';
   while(clone.firstChild) eb.appendChild(clone.firstChild);
 
+  // Move overlay to <body> so position:fixed truly covers the full viewport
+  // (if left inside tutor-inner, a transformed ancestor limits fixed positioning)
+  if(overlay.parentElement!==document.body) document.body.appendChild(overlay);
   overlay.style.display='flex';
   window._solExpandMode=true;
   if(window.MathJax?.typesetPromise)MathJax.typesetPromise([eb]).catch(function(){});
-  setTimeout(function(){_tEl('sol-follow-in')?.focus();},150);
+  setTimeout(function(){document.getElementById('sol-follow-in')?.focus();},150);
 }
 
 function collapseSolution(){
-  const overlay=_tEl('sol-expand');
+  const overlay=document.getElementById('sol-expand');
   if(overlay)overlay.style.display='none';
   window._solExpandMode=false;
 }
 
 function solFollowUp(){
-  const inp=_tEl('sol-follow-in');
+  const inp=document.getElementById('sol-follow-in');
   if(!inp)return;
   const q=inp.value.trim();
   if(!q)return;
@@ -11426,7 +11430,7 @@ function launchTutorForStudent(email) {
   <button class="bni"    id="bn-settings" onclick="showView('settings',this)"><span class="ico">⚙️</span>Settings</button>
 </nav>
 
-<!-- ── Solution expand overlay — covers full viewport ── -->
+<!-- ── Solution expand overlay — appended to <body> on open so position:fixed truly covers viewport ── -->
 <div id="sol-expand">
   <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--bd);flex-shrink:0;background:var(--bg1);">
     <div style="display:flex;align-items:center;gap:10px;">
@@ -11436,10 +11440,11 @@ function launchTutorForStudent(email) {
         <div style="font-size:10px;color:var(--mt)">Scroll · ask follow-up below</div>
       </div>
     </div>
-    <button onclick="collapseSolution()" style="background:transparent;border:1px solid var(--bd2);border-radius:8px;color:var(--tx2);font-size:13px;padding:5px 13px;cursor:pointer;font-family:inherit;">⊠ Close</button>
+    <button onclick="collapseSolution()" style="background:var(--c2);border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:700;padding:7px 16px;cursor:pointer;font-family:inherit;">← Back</button>
   </div>
   <div id="sol-exp-body"></div>
   <div style="border-top:1px solid var(--bd);padding:10px 12px;flex-shrink:0;background:var(--bg1);display:flex;gap:8px;align-items:center;">
+    <button onclick="collapseSolution()" style="background:transparent;border:1px solid var(--bd2);border-radius:10px;color:var(--tx2);font-size:13px;padding:10px 14px;cursor:pointer;font-family:inherit;flex-shrink:0;white-space:nowrap;">← Back</button>
     <input id="sol-follow-in" placeholder="Ask a follow-up question…"
       onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();solFollowUp();}">
     <button onclick="solFollowUp()" style="background:var(--c1);border:none;border-radius:10px;color:#0a0f1e;padding:10px 16px;cursor:pointer;font-size:16px;font-weight:900;flex-shrink:0;">↑</button>
