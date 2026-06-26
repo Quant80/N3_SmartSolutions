@@ -4478,28 +4478,40 @@ async function genAssignmentAI(){
   btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Generating…';
   out.innerHTML='<div class="infobox cyan" style="margin-bottom:8px">⏳ AI is building your '+subj+' '+type+' — this takes 15–30 seconds…</div>';
 
-  const prompt='You are an expert South African DBE curriculum designer creating a formal '+subj+' Grade '+grade+' '+type+'.\n\n'
+  const hardExtra = diff==='hard'
+    ? 'ALL questions must be GENUINELY HARD at DBE Bloom Level 5–6: multi-step proofs, unfamiliar contexts requiring synthesis across topics, extended reasoning, complex algebraic manipulation, theorem applications. Every question must challenge top-performing learners. No recall or direct-substitution questions allowed.\n'
+    : diff==='easy'
+    ? 'ALL questions must be accessible: direct recall, single-step substitution, familiar contexts only.\n'
+    : 'Distribute difficulty: ~30% easy (recall/substitution), ~40% medium (application/multi-step), ~30% hard (complex proofs, synthesis, unfamiliar contexts). Hard questions must genuinely challenge high-achieving learners.\n';
+
+  const prompt='You are a Senior DBE examiner producing a formal printed '+subj+' Grade '+grade+' '+type+' paper. Output ONLY the exam paper — no commentary, no meta-text, no JavaScript, no HTML.\n\n'
    +'SPECIFICATIONS:\n'
    +'- Total marks: '+marks+'\n'
    +'- Number of questions: '+numQ+'\n'
    +'- Topics: '+topicStr+'\n'
-   +'- Difficulty: '+diffDesc+'\n'
-   +(extra?'- Extra instructions: '+extra+'\n':'')
-   +'\nFORMATTING RULES:\n'
-   +'- Use LaTeX for ALL mathematical expressions: \\( inline \\) or \\[ display \\]\n'
+   +'- Difficulty standard: '+diffDesc+'\n'
+   +hardExtra
+   +(extra?'- Additional instructions: '+extra+'\n':'')
+   +'\nMATH FORMATTING (critical — renderer uses MathJax):\n'
+   +'- Inline expressions: \\( ... \\)  e.g. \\( 3x^2 - 4x + 1 \\)\n'
+   +'- Stand-alone equations: \\[ ... \\]  e.g. \\[ f(x) = \\frac{x^2-1}{x+1} \\]\n'
+   +'- Use \\[ \\] whenever an equation deserves its own line (working steps, given expressions, graphs)\n'
+   +'- Use \\frac{}{}, \\sqrt{}, \\sin, \\cos, \\tan, \\theta, \\triangle, \\parallel, ^, _ correctly\n'
+   +'- NEVER write plain text like "x^2" or "sqrt(x)" — always use LaTeX\n'
+   +'\nPAPER FORMATTING RULES:\n'
    +'- Each question must show mark allocation in square brackets e.g. [3 marks]\n'
-   +'- Use clear question numbering: 1., 1.1, 1.1.1 etc.\n'
-   +'- Sub-questions where appropriate\n'
-   +'- Difficulty label on each question: (Easy), (Medium), or (Hard)\n\n'
-   +'OUTPUT STRUCTURE:\n'
+   +'- Use clear numbering: QUESTION 1 → 1.1 → 1.1.1\n'
+   +'- DO NOT include difficulty labels (Easy/Medium/Hard) on questions — teacher reference only\n'
+   +'- DO NOT include a mark-arithmetic breakdown like "(Total = 6+7+6+8)"\n'
+   +'- End questions section with a clean "TOTAL: '+marks+' MARKS" line only\n'
+   +'- Write exactly as a formal DBE printed exam paper would appear\n'
+   +'\nOUTPUT STRUCTURE:\n'
    +'═══════════════════════════════════\n'
    +subj.toUpperCase()+' GRADE '+grade+' — '+type.toUpperCase()+'\n'
-   +'Total: '+marks+' marks | Time: '+(parseInt(marks)<=30?'30 min':parseInt(marks)<=60?'1 hour':parseInt(marks)<=100?'2 hours':'3 hours')+'\n'
+   +'Total: '+marks+' marks | Time: '+(parseInt(marks)<=30?'30 minutes':parseInt(marks)<=60?'1 hour':parseInt(marks)<=100?'2 hours':'3 hours')+'\n'
    +'═══════════════════════════════════\n\n'
-   +'[QUESTIONS SECTION]\n'
-   +'[Each question on its own, numbered, with marks in brackets]\n\n'
    +(inclAns!=='none'
-     ?'\n---MEMO_START---\nMEMORANDUM / MODEL ANSWERS\n---MEMO_START---\n[Complete worked solutions for every question, step-by-step, with marks per step]\n'
+     ?'\n---MEMO_START---\nMEMORANDUM / MARKING GUIDELINES\n---MEMO_START---\n[Full worked solutions, step-by-step. Show marks per step. In the memo only, add (Easy)/(Medium)/(Hard) per sub-question for teacher reference.]\n'
      :'');
 
   try{
@@ -4545,7 +4557,7 @@ async function genAssignmentAI(){
     window._genAsgnMemoHTML  = memoHTML;
     window._genAsgnDiff      = diff;
 
-    if(window.MathJax?.typesetPromise) MathJax.typesetPromise([out]).catch(function(){});
+    if(window.MathJax?.typesetPromise) setTimeout(function(){MathJax.typesetPromise([out]).catch(function(){});},300);
 
     // Auto-fill title if blank
     const titleEl=document.getElementById('a-title');
@@ -4819,22 +4831,33 @@ async function nvGenAI(){
   if(btn){btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Generating…';}
   out.innerHTML='<div class="infobox cyan">⏳ Creating a fresh version of this assessment… (15–30 seconds)</div>';
 
-  var diffDesc={easy:'EASY — recall and substitution',medium:'MEDIUM — application and multi-step',
-    hard:'HARD — synthesis and complex proofs',mixed:'MIXED DBE-style — 30% easy, 40% medium, 30% hard'}[diff]||'MIXED';
+  var diffDesc={
+    easy:'EASY — direct recall and single-step substitution only',
+    medium:'MEDIUM — application and multi-step reasoning',
+    hard:'HARD — synthesis, complex proofs, extended reasoning, Bloom L5-6. ALL questions must genuinely challenge top learners — no recall.',
+    mixed:'MIXED DBE-style — 30% easy, 40% medium, 30% hard (hard questions must be truly hard)'
+  }[diff]||'MIXED DBE-style';
 
-  var prompt='You are an expert South African DBE examiner. Create a FRESH VERSION of this assessment:\n\n'
-    +'Subject: '+orig.subject+'\nGrade: '+orig.grade+'\nType: '+orig.type+'\nTotal marks: '+orig.marks+'\n'
-    +'Number of questions: '+numQ+'\nDifficulty: '+diffDesc+'\n'
+  var prompt='You are a Senior DBE examiner creating a FRESH VERSION of a formal printed assessment. Output ONLY the exam paper — no commentary, no JavaScript, no HTML.\n\n'
+    +'Subject: '+orig.subject+'\nGrade: '+orig.grade+'\nType: '+orig.type+'\nTotal marks: '+orig.marks+'\nQuestions: '+numQ+'\nDifficulty: '+diffDesc+'\n'
     +(extra?'Special instructions: '+extra+'\n':'')
-    +'\nIMPORTANT: This is a NEW version — different questions testing the same curriculum topics.\n'
-    +'Use LaTeX \\( \\) for all math. Show mark allocations [X marks] per question.\n\n'
-    +'OUTPUT STRUCTURE:\n'
+    +'\nThis is a NEW version — different questions testing the same curriculum topics.\n'
+    +'\nMATH FORMATTING (MathJax renderer):\n'
+    +'- Inline: \\( ... \\)   Display/own line: \\[ ... \\]\n'
+    +'- Use \\[ \\] for any equation deserving its own line\n'
+    +'- Use \\frac{}{}, \\sqrt{}, \\sin, \\cos, \\tan, \\theta, \\triangle etc.\n'
+    +'- NEVER write plain text math like "x^2" or "sqrt(x)"\n'
+    +'\nPAPER RULES:\n'
+    +'- Show [X marks] per sub-question\n'
+    +'- DO NOT include (Easy)/(Medium)/(Hard) labels on questions — teacher reference only\n'
+    +'- DO NOT include mark-arithmetic like "(Total = 6+7+8)"\n'
+    +'- End with "TOTAL: '+orig.marks+' MARKS" only\n'
+    +'\nOUTPUT STRUCTURE:\n'
     +'═══════════════════════════════\n'
     +orig.subject.toUpperCase()+' GRADE '+orig.grade+' — '+orig.type.toUpperCase()+' (VERSION '+( (all.filter(function(a){return a.title.replace(/\s+v\d+$/i,'')===orig.title.replace(/\s+v\d+$/i,'');}).length+1) )+')\n'
     +'Total: '+orig.marks+' marks\n'
     +'═══════════════════════════════\n\n'
-    +'[QUESTIONS]\n\n'
-    +'---MEMO_START---\nMEMORANDUM\n---MEMO_START---\n[Full worked solutions]\n';
+    +'---MEMO_START---\nMEMORANDUM / MARKING GUIDELINES\n---MEMO_START---\n[Full worked solutions, marks per step. Add (Easy)/(Medium)/(Hard) per question in memo only.]\n';
 
   try{
     var raw=await callAI(prompt,null,null);
@@ -4849,7 +4872,7 @@ async function nvGenAI(){
     out.innerHTML='<div style="background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.3);border-radius:var(--r);padding:10px;margin-bottom:8px">'
       +'<div style="font-size:11px;font-weight:800;color:var(--c3);margin-bottom:6px">✅ New version generated! Scroll to review.</div></div>'
       +'<div style="max-height:220px;overflow-y:auto;border:1px solid var(--bd);border-radius:var(--r);padding:14px;background:var(--bg0);font-size:12px">'+rendered+'</div>';
-    if(window.MathJax?.typesetPromise)MathJax.typesetPromise([out]).catch(function(){});
+    if(window.MathJax?.typesetPromise)setTimeout(function(){MathJax.typesetPromise([out]).catch(function(){});},300);
   }catch(e){out.innerHTML='<div class="er">❌ '+e.message+'</div>';}
   if(btn){btn.disabled=false;btn.innerHTML='✨ Generate with AI';}
 }
