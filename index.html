@@ -8630,6 +8630,22 @@ function addBub(isU,txt,html=''){
         eb.innerHTML+='<div class="sol-ai" style="margin-top:12px">N³ AI</div>'+html;
         eb.scrollTop=eb.scrollHeight;
         if(window.MathJax?.typesetPromise)MathJax.typesetPromise([eb]).catch(function(){});
+        // drawGraph runs 300ms later on the original bubble canvas (by ID).
+        // After it finishes, snapshot those canvases and swap the blank expand copies.
+        setTimeout(function(){
+          const ebCanvases=Array.from(eb.querySelectorAll('canvas'));
+          if(!ebCanvases.length)return;
+          ebCanvases.forEach(function(ec){
+            const orig=b.querySelector('canvas'+(ec.id?'#'+ec.id:''));
+            if(orig&&orig.width>0){
+              var img=document.createElement('img');
+              img.src=orig.toDataURL();
+              img.style.cssText='display:block;max-width:100%;height:auto;margin:8px auto;border-radius:10px';
+              ec.replaceWith(img);
+            }
+          });
+          eb.scrollTop=eb.scrollHeight;
+        },700);
       }
     }
   }
@@ -8645,10 +8661,29 @@ function expandSolution(btn){
   const eb=_tEl('sol-exp-body');
   const overlay=_tEl('sol-expand');
   if(!eb||!overlay)return;
-  // Clone content without the expand button
+
+  // Snapshot canvas pixel data BEFORE cloning — cloneNode() loses all canvas pixels
+  const origCanvases=Array.from(bub.querySelectorAll('canvas'));
+  const snapshots=origCanvases.map(function(cv){
+    return { dataUrl: cv.width>0 ? cv.toDataURL() : null, w: cv.style.width, h: cv.style.height };
+  });
+
   const clone=bub.cloneNode(true);
   clone.querySelector('.bub-expand')?.remove();
-  eb.innerHTML=clone.innerHTML;
+
+  // Replace each blank cloned canvas with a <img> showing the original snapshot
+  Array.from(clone.querySelectorAll('canvas')).forEach(function(cv,i){
+    if(!snapshots[i]||!snapshots[i].dataUrl)return;
+    var img=document.createElement('img');
+    img.src=snapshots[i].dataUrl;
+    img.style.cssText='display:block;max-width:100%;height:auto;margin:8px auto;border-radius:10px';
+    cv.replaceWith(img);
+  });
+
+  // Move clone's children into expand body (avoids serialising huge data-URLs via innerHTML)
+  eb.innerHTML='';
+  while(clone.firstChild) eb.appendChild(clone.firstChild);
+
   overlay.style.display='flex';
   window._solExpandMode=true;
   if(window.MathJax?.typesetPromise)MathJax.typesetPromise([eb]).catch(function(){});
