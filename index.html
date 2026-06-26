@@ -8827,9 +8827,10 @@ function drawMathGraph(canvas, fns, xMin, xMax) {
   const featLo = Math.min(...featYs);
   const featHi = Math.max(...featYs);
   const featSpan = Math.max(featHi - featLo, 2);
-  // Cap the raw range so extreme function tails don't dwarf the interesting region
-  const lo = Math.max(lo_raw, featLo - featSpan * 1.5);
-  const hi = Math.min(hi_raw, featHi + featSpan * 0.5);
+  // Tight symmetric cap — prevents tails of parabolas from making the chart enormous.
+  // 0.35× keeps labels visible for both concave-up and concave-down without cutting features.
+  const lo = Math.max(lo_raw, featLo - featSpan * 0.35);
+  const hi = Math.min(hi_raw, featHi + featSpan * 0.35);
   const pad  = Math.max((hi - lo) * 0.15, 1);
   // Always keep y=0 visible with at least 1 unit headroom above and below
   const yMin = Math.min(Math.floor(lo - pad), -1);
@@ -8842,7 +8843,8 @@ function drawMathGraph(canvas, fns, xMin, xMax) {
   const xSpan = xMax - xMin;
   const ySpan = yMax - yMin;
   const ppuX = Math.min(availW / xSpan, 52);
-  const ppuY = Math.min(ppuX, (availW * 2) / Math.max(ySpan, 1));
+  // Hard ceiling: canvas height max 480px so y=0 (x-intercept labels) always on screen
+  const ppuY = Math.min(ppuX, (availW * 2) / Math.max(ySpan, 1), 480 / Math.max(ySpan, 1));
 
   const cw = Math.round(xSpan * ppuX);
   const ch = Math.round(ySpan * ppuY);
