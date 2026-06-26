@@ -850,6 +850,18 @@ td.muted{color:var(--tx2)}
   }
   .t-blbl { font-size:9px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--mt); margin-bottom:4px; }
   .ub .t-blbl { color:var(--c1); }
+  /* Expand-solution button — appears at bottom of each AI bubble */
+  .bub-expand { display:none; align-items:center; gap:5px; margin-top:10px; padding:4px 11px; background:transparent; border:1px solid var(--bd2); border-radius:7px; color:var(--mt); font-size:13px; cursor:pointer; transition:all .15s; font-family:inherit; }
+  .bub:hover .bub-expand { display:inline-flex; }
+  .bub-expand:hover { background:var(--bg1); color:var(--tx); border-color:var(--c1); }
+  /* Solution expand fullscreen overlay */
+  #sol-expand { display:none; position:fixed; inset:0; z-index:9999; background:var(--bg0); flex-direction:column; overflow:hidden; }
+  #sol-exp-body { flex:1; overflow-y:auto; padding:20px 24px; line-height:1.9; font-size:13.5px; }
+  #sol-exp-body .sol-divider { border:none; border-top:1px solid var(--bd); margin:16px 0; }
+  #sol-exp-body .sol-you { font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--c1); margin-bottom:4px; }
+  #sol-exp-body .sol-ai  { font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--mt); margin-bottom:4px; }
+  #sol-follow-in { flex:1; background:var(--bg2); border:1.5px solid var(--bd2); border-radius:10px; padding:10px 14px; color:var(--tx); font-size:13px; outline:none; font-family:inherit; }
+  #sol-follow-in:focus { border-color:var(--c1); }
 
   /* Equation / block containers */
   .eq { background:var(--bg0); border:1px solid var(--bd); border-left:3px solid var(--c1); border-radius:8px; padding:10px 12px; margin:8px 0; text-align:center; overflow-x:auto; font-size:13px; }
@@ -8597,9 +8609,65 @@ function addBub(isU,txt,html=''){
   const row=document.createElement('div');row.className='mrow'+(isU?' u':'');
   const av=document.createElement('div');av.className='av '+(isU?'us':'ai');av.textContent=isU?'👤':'MS';
   const b=document.createElement('div');b.className='bub'+(isU?' ub':'');
-  b.innerHTML=isU?`<div class="t-blbl">You</div>${esc(txt)}`:html;
+  if(isU){
+    b.innerHTML=`<div class="t-blbl">You</div>${esc(txt)}`;
+    // Mirror user message into expand view if open
+    if(window._solExpandMode){
+      const eb=_tEl('sol-exp-body');
+      if(eb){
+        eb.innerHTML+='<hr class="sol-divider"><div class="sol-you">You</div><p>'+esc(txt)+'</p>'
+          +'<div id="sol-exp-typing" style="color:var(--mt);padding:8px 0;letter-spacing:3px">•••</div>';
+        eb.scrollTop=eb.scrollHeight;
+      }
+    }
+  }else{
+    b.innerHTML=html+'<button class="bub-expand" onclick="expandSolution(this)" title="Expand to full screen">⛶ Expand</button>';
+    // Mirror AI response into expand view if open
+    if(window._solExpandMode){
+      const eb=_tEl('sol-exp-body');
+      if(eb){
+        _tEl('sol-exp-typing')?.remove();
+        eb.innerHTML+='<div class="sol-ai" style="margin-top:12px">N³ AI</div>'+html;
+        eb.scrollTop=eb.scrollHeight;
+        if(window.MathJax?.typesetPromise)MathJax.typesetPromise([eb]).catch(function(){});
+      }
+    }
+  }
   row.appendChild(av);row.appendChild(b);msgs.appendChild(row);
   msgs.scrollTop=msgs.scrollHeight;return row;
+}
+
+window._solExpandMode=false;
+
+function expandSolution(btn){
+  const bub=btn.closest('.bub');
+  if(!bub)return;
+  const eb=_tEl('sol-exp-body');
+  const overlay=_tEl('sol-expand');
+  if(!eb||!overlay)return;
+  // Clone content without the expand button
+  const clone=bub.cloneNode(true);
+  clone.querySelector('.bub-expand')?.remove();
+  eb.innerHTML=clone.innerHTML;
+  overlay.style.display='flex';
+  window._solExpandMode=true;
+  if(window.MathJax?.typesetPromise)MathJax.typesetPromise([eb]).catch(function(){});
+  setTimeout(function(){_tEl('sol-follow-in')?.focus();},150);
+}
+
+function collapseSolution(){
+  const overlay=_tEl('sol-expand');
+  if(overlay)overlay.style.display='none';
+  window._solExpandMode=false;
+}
+
+function solFollowUp(){
+  const inp=_tEl('sol-follow-in');
+  if(!inp)return;
+  const q=inp.value.trim();
+  if(!q)return;
+  inp.value='';
+  tutor_ask(q); // sends to main chat — addBub mirrors into expand view automatically
 }
 function addTyping(){
   const msgs=_tEl('msgs');
@@ -11309,6 +11377,27 @@ function launchTutorForStudent(email) {
   <button class="bni"    id="bn-mark"     onclick="showView('mark',this)"><span class="ico">✏️</span>Mark</button>
   <button class="bni"    id="bn-settings" onclick="showView('settings',this)"><span class="ico">⚙️</span>Settings</button>
 </nav>
+
+<!-- ── Solution expand overlay — covers full viewport ── -->
+<div id="sol-expand">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--bd);flex-shrink:0;background:var(--bg1);">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="font-size:18px">🎓</span>
+      <div>
+        <div style="font-size:12px;font-weight:800;color:var(--c1)">N³ AI — Full Solution</div>
+        <div style="font-size:10px;color:var(--mt)">Scroll · ask follow-up below</div>
+      </div>
+    </div>
+    <button onclick="collapseSolution()" style="background:transparent;border:1px solid var(--bd2);border-radius:8px;color:var(--tx2);font-size:13px;padding:5px 13px;cursor:pointer;font-family:inherit;">⊠ Close</button>
+  </div>
+  <div id="sol-exp-body"></div>
+  <div style="border-top:1px solid var(--bd);padding:10px 12px;flex-shrink:0;background:var(--bg1);display:flex;gap:8px;align-items:center;">
+    <input id="sol-follow-in" placeholder="Ask a follow-up question…"
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();solFollowUp();}">
+    <button onclick="solFollowUp()" style="background:var(--c1);border:none;border-radius:10px;color:#0a0f1e;padding:10px 16px;cursor:pointer;font-size:16px;font-weight:900;flex-shrink:0;">↑</button>
+  </div>
+</div>
+
 </div><!-- /mobileApp -->
 
 <!-- DESKTOP LAYOUT -->
