@@ -8743,7 +8743,37 @@ function drawMathGraph(canvas, fns, xMin, xMax) {
   const dpr = window.devicePixelRatio || 1;
   const ml = 48, mr = 20, mt = 16, mb = 30;
 
-  // ── Step 1: y range ──────────────────────────────────────────────
+  // ── Step 0: pre-compute features to guide y-range ───────────────
+  // (features don't depend on scale — compute once, reuse in drawing)
+  const _preFeatures = fns.map(({fn}) => {
+    const xInts = findRoots(fn, xMin, xMax).slice(0, 10);
+    const yVal  = evalY(fn, 0);
+    const yInt  = (0 >= xMin && 0 <= xMax && yVal !== null) ? [{x:0, y:yVal}] : [];
+    const tps   = [];
+    const dx    = (xMax - xMin) / 2000;
+    let pSlope  = null;
+    for (let i = 1; i < 2000; i++) {
+      const xa = xMin + (i-1)*dx, xb = xMin + i*dx;
+      const fa = evalY(fn, xa), fb = evalY(fn, xb);
+      if (fa===null||fb===null){pSlope=null;continue;}
+      const slope = fb - fa;
+      if (pSlope!==null && pSlope*slope<0){
+        let lo2=xa-dx, hi2=xb;
+        for(let k=0;k<40;k++){
+          const mid=(lo2+hi2)/2, fm=evalY(fn,mid), fm2=evalY(fn,mid+dx*0.01);
+          if(fm===null||fm2===null)break;
+          if((fm2-fm)*(pSlope<0?-1:1)<0)hi2=mid;else lo2=mid;
+        }
+        const tx=(lo2+hi2)/2, ty=evalY(fn,tx);
+        if(ty!==null&&!tps.some(t=>Math.abs(t.x-tx)<0.1))
+          tps.push({x:Math.round(tx*1000)/1000, y:Math.round(ty*1000)/1000});
+      }
+      pSlope=slope;
+    }
+    return {xInts, yInt, tps};
+  });
+
+  // ── Step 1: y range — feature-capped to keep chart readable ─────
   let ys = [];
   fns.forEach(({fn}) => {
     for (let i = 0; i <= 1000; i++) {
@@ -8753,11 +8783,22 @@ function drawMathGraph(canvas, fns, xMin, xMax) {
     }
   });
   ys.sort((a, b) => a - b);
-  const lo   = ys[Math.floor(ys.length * 0.01)] ?? -5;
-  const hi   = ys[Math.floor(ys.length * 0.99)] ??  5;
+  const lo_raw = ys[Math.floor(ys.length * 0.01)] ?? -5;
+  const hi_raw = ys[Math.floor(ys.length * 0.99)] ??  5;
+  // Feature y-values: TPs, y-intercepts, and y=0 (for x-intercept labels)
+  const featYs = [0,
+    ..._preFeatures.flatMap(f => [...f.tps.map(t=>t.y), ...f.yInt.map(p=>p.y)])
+  ];
+  const featLo = Math.min(...featYs);
+  const featHi = Math.max(...featYs);
+  const featSpan = Math.max(featHi - featLo, 2);
+  // Cap the raw range so extreme function tails don't dwarf the interesting region
+  const lo = Math.max(lo_raw, featLo - featSpan * 1.5);
+  const hi = Math.min(hi_raw, featHi + featSpan * 0.5);
   const pad  = Math.max((hi - lo) * 0.15, 1);
-  const yMin = Math.floor(lo - pad);
-  const yMax = Math.ceil(hi + pad);
+  // Always keep y=0 visible with at least 1 unit headroom above and below
+  const yMin = Math.min(Math.floor(lo - pad), -1);
+  const yMax = Math.max(Math.ceil(hi + pad),   1);
 
   // ── Step 2: scale ─────────────────────────────────────────────────
   const containerW = (canvas.parentElement?.offsetWidth || canvas.offsetWidth || 520);
@@ -8838,44 +8879,10 @@ function drawMathGraph(canvas, fns, xMin, xMax) {
   ctx.save();
   ctx.beginPath(); ctx.rect(ml, mt, cw, ch); ctx.clip();
 
-  // ── Analyse each single-function for TP & axis of symmetry ───────
-  // Collect features per function for post-clip drawing
-  const fnFeatures = fns.map(({fn, color}, fi) => {
+  // ── Collect features for drawing — reuse pre-computed values ─────
+  const fnFeatures = fns.map(({color}, fi) => {
     const col = color || GPAL[fi % GPAL.length];
-    // x-intercepts
-    const xInts = findRoots(fn, xMin, xMax).slice(0, 10);
-    // y-intercept
-    const yVal = evalY(fn, 0);
-    const yInt = (0 >= xMin && 0 <= xMax && yVal !== null) ? [{x:0, y:yVal}] : [];
-    // Turning point: find local min/max by scanning derivative sign changes
-    const tps = [];
-    const dx = (xMax - xMin) / 2000;
-    let pSlope = null;
-    for (let i = 1; i < 2000; i++) {
-      const xa = xMin + (i-1) * dx;
-      const xb = xMin + i * dx;
-      const fa = evalY(fn, xa), fb = evalY(fn, xb);
-      if (fa === null || fb === null) { pSlope = null; continue; }
-      const slope = fb - fa;
-      if (pSlope !== null && pSlope * slope < 0) {
-        // Sign change → turning point between xa-dx and xb
-        let lo = xa - dx, hi = xb;
-        for (let k = 0; k < 40; k++) {
-          const mid = (lo + hi) / 2;
-          const fmid = evalY(fn, mid), fmid2 = evalY(fn, mid + dx*0.01);
-          if (fmid === null || fmid2 === null) break;
-          if ((fmid2 - fmid) * (pSlope < 0 ? -1 : 1) < 0) hi = mid; else lo = mid;
-        }
-        const tx = (lo + hi) / 2;
-        const ty = evalY(fn, tx);
-        if (ty !== null && !tps.some(t => Math.abs(t.x - tx) < 0.1)) {
-          tps.push({x: Math.round(tx*1000)/1000, y: Math.round(ty*1000)/1000});
-        }
-      }
-      pSlope = slope;
-    }
-    // Axis of symmetry: if exactly one TP (parabola/cubic), draw vertical line through TP
-    // For two x-intercepts: axis = midpoint
+    const {xInts, yInt, tps} = _preFeatures[fi];
     let axisX = null;
     if (tps.length === 1) axisX = tps[0].x;
     else if (xInts.length === 2) axisX = (xInts[0] + xInts[1]) / 2;
@@ -8950,12 +8957,16 @@ function drawMathGraph(canvas, fns, xMin, xMax) {
 
   // ── x-intercepts — bright yellow ─────────────────────────────────
   const X_INT_COL = '#facc15';
+  const xAxisPy = toY(0); // pixel y-position of x-axis
   fnFeatures.forEach(({xInts}) => {
     xInts.forEach(rx => {
-      const px = toX(rx), py = toY(0);
+      const px = toX(rx), py = xAxisPy;
       if (px < ml-2 || px > ml+cw+2) return;
+      if (py < mt-2 || py > mt+ch+2) return; // x-axis outside visible area
       const lbl = '(' + (Math.round(rx*100)/100) + ';0)';
-      dotLabel(px, py, lbl, X_INT_COL, X_INT_COL, false);
+      // Place label above the dot when x-axis is in lower half (avoids clipping)
+      const above = py > mt + ch * 0.55;
+      dotLabel(px, py, lbl, X_INT_COL, X_INT_COL, above);
     });
   });
 
@@ -11842,7 +11853,6 @@ function launchTutorForStudent(email) {
     </div>
     <button class="dt-tb-btn dt-btn-photo" onclick="dtShowPanel('upload')">📸 Solve Photo</button>
     <button class="dt-tb-btn dt-btn-wa" onclick="openWA()">📲 WhatsApp</button>
-    <button class="dt-tb-btn" id="dt-focusBtn" onclick="dtToggleFocus()" title="Focus — hide sidebars" style="font-size:16px;padding:6px 10px;">⛶</button>
     <button class="dt-tb-btn dt-btn-mobile" onclick="switchLayout('mobile')">📱 Mobile View</button>
   </div>
 
