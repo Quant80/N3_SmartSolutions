@@ -670,9 +670,27 @@ td.muted{color:var(--tx2)}
   flex: 1;
   overflow: hidden;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 #tutor-inner > * {
   height: 100% !important;
+}
+/* Force mobileApp to fill tutor-inner (not 100vh) when embedded in overlay */
+#tutor-inner .tutor-wrap {
+  flex: 1;
+  height: 100% !important;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+#tutor-inner #mobileApp {
+  height: 100% !important;
+  flex: 1;
+}
+#tutor-inner #desktopApp {
+  height: 100% !important;
+  flex: 1;
 }
 /* Panel-s-tutor is now just a placeholder - real UI is the overlay */
 #panel-s-tutor {
@@ -10585,19 +10603,22 @@ function openTutorOverlay(subj, isExplore) {
     }
   }
 
-  // ── Bridge the API key from teacher app settings into tutor ──
+  // ── Bridge the API key + provider from teacher settings into tutor ──
   const teacherKey = currentKey();
+  const teacherProvider = G.provider || 'claude';
   if (teacherKey && typeof TUTOR_G !== 'undefined') {
-    TUTOR_G.keys['claude'] = teacherKey;
-    TUTOR_G.keys[TUTOR_G.provider] = teacherKey;
+    TUTOR_G.provider = teacherProvider;
+    TUTOR_G.keys[teacherProvider] = teacherKey;
     TUTOR_G.key = teacherKey;
-    // Also persist so tutor's own key check passes
-    try { localStorage.setItem('tutor_key_claude', teacherKey); } catch(e){}
+    try {
+      localStorage.setItem('tutor_provider', teacherProvider);
+      localStorage.setItem('tutor_key_'+teacherProvider, teacherKey);
+    } catch(e){}
     keyStatus.textContent = '🔑 Key connected';
     keyStatus.style.color = '#10b981';
   } else {
-    keyStatus.textContent = teacherKey ? '🔑 Key connected' : '⚠️ No API key — go to Settings';
-    keyStatus.style.color = teacherKey ? '#10b981' : '#f59e0b';
+    keyStatus.textContent = '⚠️ No API key — go to Settings';
+    keyStatus.style.color = '#f59e0b';
   }
 
   // ── Show context bar with student info ──
