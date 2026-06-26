@@ -668,29 +668,26 @@ td.muted{color:var(--tx2)}
 }
 #tutor-inner {
   flex: 1;
+  min-height: 0;
   overflow: hidden;
   position: relative;
-  display: flex;
-  flex-direction: column;
 }
 #tutor-inner > * {
   height: 100% !important;
 }
-/* Force mobileApp to fill tutor-inner (not 100vh) when embedded in overlay */
-#tutor-inner .tutor-wrap {
-  flex: 1;
-  height: 100% !important;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-#tutor-inner #mobileApp {
-  height: 100% !important;
-  flex: 1;
-}
+/* Override 100vh → 100% so mobileApp fills tutor-inner instead of viewport */
+#tutor-inner #mobileApp,
 #tutor-inner #desktopApp {
   height: 100% !important;
+}
+/* .content uses flex:1 child (.views-wrap) but the CSS selector was .t-content —
+   scope fix here so views-wrap gets proper height and absolute views aren't 0px */
+#tutor-inner .content {
+  display: flex;
+  flex-direction: column;
   flex: 1;
+  overflow: hidden;
+  position: relative;
 }
 /* Panel-s-tutor is now just a placeholder - real UI is the overlay */
 #panel-s-tutor {
