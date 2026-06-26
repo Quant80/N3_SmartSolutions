@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -1938,12 +1938,13 @@ let G={
 };
 
 const PROVIDERS={
-  claude:{name:'Claude (Anthropic)',placeholder:'sk-ant-api03-…',color:'#00d4f0'},
-  openai:{name:'ChatGPT / OpenRouter',placeholder:'sk-proj-… or sk-or-v1-…',color:'#10b981'},
-  deepseek:{name:'DeepSeek',placeholder:'sk-or-v1-…',color:'#818cf8'},
-  qwen:{name:'Qwen (Alibaba)',placeholder:'sk-or-v1-…',color:'#f59e0b'},
+  claude:  {name:'Claude (Anthropic)',  placeholder:'sk-ant-api03-…  → console.anthropic.com',       color:'#00d4f0'},
+  gemini:  {name:'Gemini Pro (Google)', placeholder:'AIzaSy…  → aistudio.google.com/app/apikey',     color:'#ea4335'},
+  openai:  {name:'ChatGPT / OpenRouter',placeholder:'sk-proj-… or sk-or-v1-…',                       color:'#10b981'},
+  deepseek:{name:'DeepSeek',            placeholder:'sk-…  → platform.deepseek.com',                  color:'#818cf8'},
+  qwen:    {name:'Qwen (Alibaba)',       placeholder:'sk-or-v1-…  → openrouter.ai/keys',              color:'#f59e0b'},
 };
-const OR_MODELS={openai:'openai/gpt-4o',deepseek:'deepseek/deepseek-chat',qwen:'qwen/qwen-max'};
+const OR_MODELS={openai:'openai/gpt-4o',deepseek:'deepseek/deepseek-chat',qwen:'qwen/qwen-max',gemini:'google/gemini-2.0-flash-001'};
 
 function setAiProvider(p){
   G.provider=p;localStorage.setItem('n3tv2_prov',p);
@@ -1956,9 +1957,11 @@ function currentKey(){return G.keys[G.provider]||''}
 
 function saveKey(){
   const v=document.getElementById('key-inp')?.value?.trim()||'';
+  if(v.startsWith('sk-ant-')) setAiProvider('claude');
+  else if(v.startsWith('AIza')) setAiProvider('gemini');
   G.keys[G.provider]=v;
   localStorage.setItem('n3tv2_key_'+G.provider,v);
-  showToast('✅ API key saved!');
+  showToast('✅ API key saved for '+PROVIDERS[G.provider].name+'!');
 }
 
 async function fetchProvider(provider,key,messages,maxTokens=4000){
@@ -1982,6 +1985,20 @@ async function fetchProvider(provider,key,messages,maxTokens=4000){
       throw new Error(e.error?.message||'Claude API error '+r.status);}
     const d=await r.json();
     return d.content.filter(c=>c.type==='text').map(c=>c.text).join('');
+  }
+
+  if(provider==='gemini' && !isOR){
+    const gemMsgs=flatMsgs.map(m=>({role:m.role==='assistant'?'model':'user',parts:[{text:m.content||''}]}));
+    const body={contents:gemMsgs,generationConfig:{maxOutputTokens:maxTokens}};
+    const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+key,{
+      method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)
+    });
+    if(!r.ok){const e=await r.json().catch(()=>({}));
+      if(r.status===400||r.status===403)throw new Error('Invalid Gemini key. Get a free one at aistudio.google.com/app/apikey');
+      if(r.status===429)throw new Error('Gemini rate limit — wait a moment and retry.');
+      throw new Error('Gemini error: '+(e.error?.message||'HTTP '+r.status));}
+    const d=await r.json();
+    return d.candidates?.[0]?.content?.parts?.[0]?.text||'';
   }
 
   if(provider==='deepseek' && !isOR){
@@ -7244,7 +7261,7 @@ function renderStudentProfile(){
 'use strict';
 // Load persisted values safely
 const _savedProvider=(()=>{try{return localStorage.getItem('tutor_provider')||'claude';}catch(e){return 'claude';}})();
-const _savedKeys=(()=>{const k={claude:'',openai:'',deepseek:'',qwen:''};try{['claude','openai','deepseek','qwen'].forEach(p=>{const v=localStorage.getItem('tutor_key_'+p);if(v)k[p]=v;});}catch(e){}return k;})();
+const _savedKeys=(()=>{const k={claude:'',gemini:'',openai:'',deepseek:'',qwen:''};try{['claude','gemini','openai','deepseek','qwen'].forEach(p=>{const v=localStorage.getItem('tutor_key_'+p);if(v)k[p]=v;});}catch(e){}return k;})();
 
 
 // ── Subject Taxonomy ──────────────────────────────────────────────────────
@@ -7330,10 +7347,11 @@ var TUTOR_G={
 
 // ── PROVIDER & KEY MANAGEMENT ────────────────────────────────────────
 const TUTOR_PROVIDERS={
-  claude:  {name:'Claude (Anthropic)',  placeholder:'sk-ant-api03-…  → console.anthropic.com',  color:'#00d4f0'},
-  openai:  {name:'ChatGPT (OpenAI)',    placeholder:'sk-proj-…  → platform.openai.com/api-keys', color:'#10b981'},
-  deepseek:{name:'DeepSeek',            placeholder:'sk-…  → platform.deepseek.com',            color:'#7c3aed'},
-  qwen:    {name:'Qwen (Alibaba)',       placeholder:'sk-…  → dashscope.console.aliyun.com',    color:'#f59e0b'}
+  claude:  {name:'Claude (Anthropic)',  placeholder:'sk-ant-api03-…  → console.anthropic.com',         color:'#00d4f0'},
+  gemini:  {name:'Gemini Pro (Google)', placeholder:'AIzaSy…  → aistudio.google.com/app/apikey',       color:'#ea4335'},
+  openai:  {name:'ChatGPT (OpenAI)',    placeholder:'sk-proj-…  → platform.openai.com/api-keys',       color:'#10b981'},
+  deepseek:{name:'DeepSeek',            placeholder:'sk-…  → platform.deepseek.com',                   color:'#7c3aed'},
+  qwen:    {name:'Qwen (Alibaba)',       placeholder:'sk-…  → dashscope.console.aliyun.com',           color:'#f59e0b'}
 };
 
 function setProvider(p){
@@ -7347,6 +7365,7 @@ function setProvider(p){
   const hint=_tEl('provHint');
   const hints={
     claude:   '🔑 Get your key at <a href="https://console.anthropic.com" target="_blank" style="color:var(--c1)">console.anthropic.com</a>',
+    gemini:   '🔑 Get a FREE key at <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--c1)">aistudio.google.com/app/apikey</a> &nbsp;(Key starts with AIza…)',
     openai:   '🔑 Get your key at <a href="https://platform.openai.com/api-keys" target="_blank" style="color:var(--c1)">platform.openai.com/api-keys</a> &nbsp;| Or use an <a href="https://openrouter.ai/keys" target="_blank" style="color:var(--c1)">OpenRouter key</a> (sk-or-…)',
     deepseek: '🔑 Get your key at <a href="https://platform.deepseek.com" target="_blank" style="color:var(--c1)">platform.deepseek.com</a> &nbsp;| Or use an <a href="https://openrouter.ai/keys" target="_blank" style="color:var(--c1)">OpenRouter key</a> (sk-or-…)',
     qwen:     '🔑 Get your key at <a href="https://dashscope.console.aliyun.com" target="_blank" style="color:var(--c1)">dashscope.console.aliyun.com</a> &nbsp;| Or use an <a href="https://openrouter.ai/keys" target="_blank" style="color:var(--c1)">OpenRouter key</a> (sk-or-…)'
@@ -7361,6 +7380,8 @@ function tutor_saveKey(v){
   // Auto-detect provider from key prefix so wrong-order entry doesn't break things
   if(k.startsWith('sk-ant-')||k.startsWith('sk-ant-api03-')){
     if(TUTOR_G.provider!=='claude') setProvider('claude');
+  } else if(k.startsWith('AIza')){
+    if(TUTOR_G.provider!=='gemini') setProvider('gemini');
   } else if(k.startsWith('sk-or-')){
     // OpenRouter key — keep whichever provider is selected, just flag it
   }
@@ -8024,6 +8045,30 @@ async function tutor_fetchProvider(provider, key, messages, maxTokens){
     return (await r.json()).content[0].text;
   }
 
+  // ── Gemini (Google AI Studio) ─────────────────────────────────────────
+  if(provider === 'gemini' && !isOpenRouterKey){
+    const gemMsgs = messages.map(m=>({
+      role: m.role==='assistant'?'model':'user',
+      parts:[{text: typeof m.content==='string'?m.content:m.content.filter(c=>c.type==='text').map(c=>c.text).join('\n')}]
+    }));
+    const body={contents:gemMsgs,generationConfig:{maxOutputTokens:maxTokens}};
+    if(sysp) body.system_instruction={parts:[{text:sysp}]};
+    let r;
+    try {
+      r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+key,{
+        method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)
+      });
+    } catch(e){ throw new Error('Network error reaching Gemini. Check your connection.'); }
+    if(!r.ok){
+      const e=await r.json().catch(()=>({}));
+      if(r.status===400||r.status===403) throw new Error('Invalid Gemini key. Get a free one at aistudio.google.com/app/apikey');
+      if(r.status===429) throw new Error('Gemini rate limit — wait a moment and retry.');
+      throw new Error('Gemini error: '+(e.error?.message||'HTTP '+r.status));
+    }
+    const d=await r.json();
+    return d.candidates?.[0]?.content?.parts?.[0]?.text||'';
+  }
+
   // ── DeepSeek (native API — api.deepseek.com) ──────────────────────────
   if(provider === 'deepseek' && !isOpenRouterKey){
     const msgsWithSys = [{role:'system',content:sysp}].concat(messages);
@@ -8132,7 +8177,8 @@ async function tutor_fetchProvider_openrouter(provider, key, messages, maxTokens
   const OR_MODEL_MAP = {
     openai:   'openai/gpt-4o',
     deepseek: 'deepseek/deepseek-chat',
-    qwen:     'qwen/qwen-max'
+    qwen:     'qwen/qwen-max',
+    gemini:   'google/gemini-2.0-flash-001'
   };
   sysp = sysp || sys();
   maxTokens = maxTokens || 8192;
@@ -11023,6 +11069,7 @@ function launchTutorForStudent(email) {
       <div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--tx2)">AI Provider</div>
       <div class="prov-row" style="display:flex;flex-wrap:wrap;gap:8px">
         <button class="t-prov-btn" data-p="claude"    onclick="setProvider('claude')"   >🤖 Claude</button>
+        <button class="t-prov-btn" data-p="gemini"    onclick="setProvider('gemini')"   >🔴 Gemini</button>
         <button class="t-prov-btn" data-p="openai"    onclick="setProvider('openai')"   >🟢 ChatGPT</button>
         <button class="t-prov-btn" data-p="deepseek"  onclick="setProvider('deepseek')" >🔵 DeepSeek</button>
         <button class="t-prov-btn" data-p="qwen"      onclick="setProvider('qwen')"     >🟡 Qwen</button>
