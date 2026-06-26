@@ -689,6 +689,16 @@ td.muted{color:var(--tx2)}
   overflow: hidden;
   position: relative;
 }
+/* ── Focus / expand mode ── */
+/* Mobile overlay: hide teacher bars so tutor fills full viewport */
+#tutor-overlay.n3-focus #tutor-back-bar,
+#tutor-overlay.n3-focus #tutor-context-bar { display: none !important; }
+/* Desktop: hide both sidebars so chat fills full width */
+#desktopApp.n3-focus .dt-sidebar,
+#desktopApp.n3-focus .dt-rsidebar { display: none !important; }
+/* Expand button base — slightly larger than normal hbtn */
+.hbtn-expand { font-size: 15px; }
+
 /* Panel-s-tutor is now just a placeholder - real UI is the overlay */
 #panel-s-tutor {
   padding: 20px;
@@ -10520,6 +10530,35 @@ function dtNavClick(btn, panel){
 
 
 
+/* ── Focus / expand mode ──────────────────────────────────────── */
+function toggleFocusMode() {
+  const overlay = document.getElementById('tutor-overlay');
+  const inOverlay = overlay && overlay.offsetParent !== null;
+  const btn = _tEl('focusBtn');
+  if (inOverlay) {
+    // Hide/show teacher's back-bar and context-bar
+    const on = overlay.classList.toggle('n3-focus');
+    if (btn) { btn.textContent = on ? '⊠' : '⛶'; btn.title = on ? 'Exit focus' : 'Focus — full screen'; }
+  } else {
+    // Standalone mobile — use native browser fullscreen
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(function(){});
+      if (btn) { btn.textContent = '⊠'; btn.title = 'Exit full screen'; }
+    } else {
+      document.exitFullscreen && document.exitFullscreen().catch(function(){});
+      if (btn) { btn.textContent = '⛶'; btn.title = 'Full screen'; }
+    }
+  }
+}
+
+function dtToggleFocus() {
+  var da = _tEl('desktopApp');
+  var btn = document.getElementById('dt-focusBtn');
+  if (!da) return;
+  var on = da.classList.toggle('n3-focus');
+  if (btn) { btn.textContent = on ? '⊠' : '⛶'; btn.title = on ? 'Exit focus' : 'Focus — hide sidebars'; }
+}
+
 /* ═══════════════════════════════════════════════════════════════
    INTEGRATION BRIDGE — connects Teacher app ↔ Tutor app
    ═══════════════════════════════════════════════════════════════ */
@@ -10752,6 +10791,7 @@ function launchTutorForStudent(email) {
   </div>
   <span class="grade-badge" id="gBadge">Gr 12</span>
   <span style="flex:1"></span>
+  <button class="hbtn hbtn-expand" id="focusBtn" onclick="toggleFocusMode()" title="Focus — full screen">⛶</button>
   <button class="hbtn" onclick="openWA()" title="WhatsApp">📲</button>
   <button class="hbtn" id="layoutBtn" onclick="switchLayout('desktop')" title="Desktop view">🖥️</button>
   <button class="hbtn" id="setBtnH" onclick="showView('settings')" title="Settings">⚙️</button>
@@ -11633,6 +11673,7 @@ function launchTutorForStudent(email) {
     </div>
     <button class="dt-tb-btn dt-btn-photo" onclick="dtShowPanel('upload')">📸 Solve Photo</button>
     <button class="dt-tb-btn dt-btn-wa" onclick="openWA()">📲 WhatsApp</button>
+    <button class="dt-tb-btn" id="dt-focusBtn" onclick="dtToggleFocus()" title="Focus — hide sidebars" style="font-size:16px;padding:6px 10px;">⛶</button>
     <button class="dt-tb-btn dt-btn-mobile" onclick="switchLayout('mobile')">📱 Mobile View</button>
   </div>
 
