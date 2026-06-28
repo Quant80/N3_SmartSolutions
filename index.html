@@ -1262,10 +1262,430 @@ td.muted{color:var(--tx2)}
   .dt-grade-box.active .dt-grade-num { color:var(--c1); }
   .dt-grade-lbl { font-size:8px; color:var(--mt); font-weight:700; letter-spacing:0.1em; text-transform:uppercase; margin-top:1px; }
 
+/* ════════════════════════════════════════════════════════════════
+   LANDING PAGE — N³ SmartSolutions Cover
+   Palette: Teal #00e5b4 · Violet #a855f7 · Amber #f59e0b
+   ════════════════════════════════════════════════════════════════ */
+#landing-screen{
+  position:fixed;inset:0;z-index:3000;
+  background:#050c1a;overflow-y:auto;
+  display:flex;flex-direction:column;
+}
+#landing-screen::-webkit-scrollbar{width:5px}
+#landing-screen::-webkit-scrollbar-thumb{background:rgba(0,229,180,.25);border-radius:3px}
+
+/* ── NAV ── */
+.lp-nav{
+  position:sticky;top:0;z-index:10;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 32px;
+  background:rgba(5,12,26,.88);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border-bottom:1px solid rgba(255,255,255,.06);
+  flex-shrink:0;
+}
+.lp-logo{display:flex;align-items:center;gap:10px}
+.lp-logo-icon{
+  width:40px;height:40px;border-radius:12px;flex-shrink:0;
+  background:linear-gradient(135deg,rgba(0,229,180,.18),rgba(168,85,247,.18));
+  border:1px solid rgba(0,229,180,.28);
+  display:flex;align-items:center;justify-content:center;font-size:19px;
+}
+.lp-logo-name{
+  font-size:14px;font-weight:900;letter-spacing:-.02em;
+  background:linear-gradient(120deg,#00e5b4,#a855f7);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.lp-logo-sub{font-size:9px;color:var(--tx3);letter-spacing:2px;text-transform:uppercase;margin-top:1px}
+.lp-nav-btns{display:flex;align-items:center;gap:8px}
+.lp-btn-ghost{
+  padding:7px 18px;border-radius:8px;
+  border:1px solid rgba(255,255,255,.13);
+  background:transparent;color:rgba(221,232,245,.65);
+  font-family:var(--font);font-size:11px;font-weight:700;
+  cursor:pointer;letter-spacing:.05em;transition:all .2s;
+}
+.lp-btn-ghost:hover{border-color:rgba(0,229,180,.4);color:#00e5b4;background:rgba(0,229,180,.06)}
+.lp-btn-teal{
+  padding:7px 20px;border-radius:8px;border:none;
+  background:linear-gradient(135deg,#00e5b4,#0ea5e9);
+  color:#050c1a;font-family:var(--font);font-size:11px;font-weight:800;
+  cursor:pointer;letter-spacing:.05em;transition:all .2s;
+  box-shadow:0 4px 16px rgba(0,229,180,.28);
+}
+.lp-btn-teal:hover{opacity:.88;box-shadow:0 6px 24px rgba(0,229,180,.4);transform:translateY(-1px)}
+
+/* ── HERO ── */
+.lp-hero{
+  position:relative;display:flex;flex-direction:column;align-items:center;
+  text-align:center;padding:90px 24px 70px;overflow:hidden;flex-shrink:0;
+}
+.lp-blob1,.lp-blob2,.lp-blob3{
+  position:absolute;border-radius:50%;pointer-events:none;
+}
+.lp-blob1{
+  width:780px;height:520px;top:-80px;left:calc(50% - 390px);
+  background:radial-gradient(ellipse,rgba(0,229,180,.11) 0%,transparent 68%);
+  animation:lp-b1 11s ease-in-out infinite;
+}
+.lp-blob2{
+  width:520px;height:420px;bottom:-60px;right:-120px;
+  background:radial-gradient(ellipse,rgba(168,85,247,.11) 0%,transparent 68%);
+  animation:lp-b2 14s ease-in-out infinite;
+}
+.lp-blob3{
+  width:320px;height:320px;top:35%;left:-90px;
+  background:radial-gradient(ellipse,rgba(245,158,11,.08) 0%,transparent 68%);
+  animation:lp-b1 9s ease-in-out infinite reverse;
+}
+@keyframes lp-b1{
+  0%,100%{transform:translate(0,0) scale(1)}
+  35%{transform:translate(22px,-18px) scale(1.05)}
+  70%{transform:translate(-14px,12px) scale(0.97)}
+}
+@keyframes lp-b2{
+  0%,100%{transform:translate(0,0) scale(1)}
+  40%{transform:translate(-22px,-28px) scale(1.07)}
+  75%{transform:translate(16px,12px) scale(0.95)}
+}
+.lp-hero-inner{position:relative;max-width:800px;margin:0 auto}
+.lp-pill{
+  display:inline-flex;align-items:center;gap:7px;
+  background:rgba(0,229,180,.08);border:1px solid rgba(0,229,180,.22);
+  border-radius:40px;padding:5px 14px;margin-bottom:30px;
+}
+.lp-pill-dot{width:6px;height:6px;border-radius:50%;background:#00e5b4;animation:pulse 2.2s infinite}
+.lp-pill-txt{font-size:9px;color:#00e5b4;font-weight:700;letter-spacing:1.8px;text-transform:uppercase}
+
+.lp-h1{
+  font-size:58px;font-weight:900;line-height:1.04;letter-spacing:-.04em;
+  color:var(--tx);margin-bottom:22px;
+}
+.lp-h1-accent{
+  background:linear-gradient(120deg,#00e5b4 0%,#a855f7 55%,#f59e0b 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-size:220% auto;animation:lp-shine 5s linear infinite;
+}
+@keyframes lp-shine{0%{background-position:0% center}100%{background-position:220% center}}
+
+.lp-subhead{
+  font-size:15px;color:var(--tx2);line-height:1.85;
+  max-width:620px;margin:0 auto 36px;
+}
+.lp-hero-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.lp-cta-primary{
+  padding:14px 30px;border-radius:11px;border:none;
+  background:linear-gradient(135deg,#00e5b4,#0ea5e9);
+  color:#050c1a;font-family:var(--font);font-size:13px;font-weight:800;
+  cursor:pointer;letter-spacing:.04em;transition:all .22s;
+  box-shadow:0 8px 28px rgba(0,229,180,.32);
+}
+.lp-cta-primary:hover{opacity:.9;box-shadow:0 14px 38px rgba(0,229,180,.42);transform:translateY(-2px)}
+.lp-cta-secondary{
+  padding:14px 30px;border-radius:11px;
+  border:1px solid rgba(255,255,255,.15);background:transparent;
+  color:rgba(221,232,245,.75);font-family:var(--font);
+  font-size:13px;font-weight:700;cursor:pointer;transition:all .22s;
+}
+.lp-cta-secondary:hover{border-color:rgba(168,85,247,.5);color:#a855f7;background:rgba(168,85,247,.06);transform:translateY(-2px)}
+
+/* ── STATS BAR ── */
+.lp-stats{
+  border-top:1px solid rgba(255,255,255,.07);
+  border-bottom:1px solid rgba(255,255,255,.07);
+  background:rgba(255,255,255,.016);
+  padding:24px;flex-shrink:0;
+}
+.lp-stats-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  max-width:720px;margin:0 auto;
+}
+.lp-stat{text-align:center;padding:8px 12px}
+.lp-stat-val{
+  font-size:28px;font-weight:900;letter-spacing:-.04em;
+  background:linear-gradient(135deg,#00e5b4,#a855f7);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.lp-stat-lbl{font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:1.5px;margin-top:3px}
+
+/* ── FEATURES ── */
+.lp-features-wrap{padding:68px 24px;flex-shrink:0}
+.lp-sec-hd{text-align:center;margin-bottom:42px}
+.lp-sec-title{font-size:30px;font-weight:900;letter-spacing:-.03em;color:var(--tx);margin-bottom:9px}
+.lp-sec-sub{font-size:13px;color:var(--tx2);max-width:500px;margin:0 auto;line-height:1.75}
+.lp-feat-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:14px;
+  max-width:1080px;margin:0 auto;
+}
+.lp-feat-card{
+  background:rgba(255,255,255,.022);border:1px solid rgba(255,255,255,.07);
+  border-radius:15px;padding:22px;transition:all .25s;
+  position:relative;overflow:hidden;
+}
+.lp-feat-card::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+  border-radius:3px 0 0 3px;background:var(--lp-fc,#00e5b4);
+}
+.lp-feat-card:hover{
+  background:rgba(255,255,255,.042);border-color:rgba(255,255,255,.13);
+  transform:translateY(-4px);box-shadow:0 16px 40px rgba(0,0,0,.28);
+}
+.lp-feat-ico{font-size:28px;margin-bottom:12px}
+.lp-feat-title{font-size:13px;font-weight:800;color:var(--tx);margin-bottom:7px}
+.lp-feat-desc{font-size:11px;color:var(--tx2);line-height:1.75}
+
+/* ── ROLES ── */
+.lp-roles-wrap{padding:0 24px 68px;flex-shrink:0}
+.lp-roles-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:14px;
+  max-width:1080px;margin:0 auto;
+}
+.lp-role-card{
+  border-radius:18px;padding:28px;border:1px solid;
+  transition:all .22s;
+}
+.lp-role-card:hover{transform:translateY(-3px);box-shadow:0 20px 48px rgba(0,0,0,.28)}
+.lp-role-card.rc-teacher{
+  background:linear-gradient(148deg,rgba(0,229,180,.07),rgba(0,229,180,.02));
+  border-color:rgba(0,229,180,.2);
+}
+.lp-role-card.rc-student{
+  background:linear-gradient(148deg,rgba(168,85,247,.07),rgba(168,85,247,.02));
+  border-color:rgba(168,85,247,.2);
+}
+.lp-role-card.rc-admin{
+  background:linear-gradient(148deg,rgba(245,158,11,.07),rgba(245,158,11,.02));
+  border-color:rgba(245,158,11,.2);
+}
+.lp-role-ico{font-size:32px;margin-bottom:14px}
+.lp-role-name{font-size:16px;font-weight:900;margin-bottom:14px;letter-spacing:-.01em}
+.rc-teacher .lp-role-name{color:#00e5b4}
+.rc-student .lp-role-name{color:#a855f7}
+.rc-admin .lp-role-name{color:#f59e0b}
+.lp-role-pts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px}
+.lp-role-pt{font-size:11px;color:var(--tx2);display:flex;align-items:flex-start;gap:8px;line-height:1.55}
+.lp-rp-ck{font-size:10px;flex-shrink:0;margin-top:1px}
+.rc-teacher .lp-rp-ck{color:#00e5b4}
+.rc-student .lp-rp-ck{color:#a855f7}
+.rc-admin .lp-rp-ck{color:#f59e0b}
+
+/* ── CTA BANNER ── */
+.lp-cta-wrap{padding:68px 24px;flex-shrink:0;position:relative;overflow:hidden}
+.lp-cta-wrap::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 65% 90% at 50% 50%,rgba(0,229,180,.075),transparent 62%);
+}
+.lp-cta-inner{position:relative;max-width:560px;margin:0 auto;text-align:center}
+.lp-cta-title{font-size:32px;font-weight:900;letter-spacing:-.03em;color:var(--tx);margin-bottom:12px}
+.lp-cta-sub{font-size:13px;color:var(--tx2);margin-bottom:28px;line-height:1.8}
+.lp-cta-note{font-size:10px;color:var(--tx3);margin-top:12px;letter-spacing:.5px}
+
+/* ── FOOTER ── */
+.lp-footer{
+  border-top:1px solid rgba(255,255,255,.07);
+  padding:20px 32px;flex-shrink:0;margin-top:auto;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;
+}
+.lp-footer-left{display:flex;align-items:center;gap:8px}
+.lp-footer-name{font-size:11px;color:rgba(221,232,245,.3)}
+.lp-footer-links{display:flex;gap:20px}
+.lp-footer-link{
+  font-size:11px;color:rgba(221,232,245,.28);
+  background:none;border:none;cursor:pointer;font-family:var(--font);
+  transition:color .15s;padding:0;letter-spacing:.02em;
+}
+.lp-footer-link:hover{color:rgba(221,232,245,.65)}
+.lp-footer-copy{font-size:10px;color:rgba(221,232,245,.18)}
+
+/* ── RESPONSIVE ── */
+@media(max-width:800px){
+  .lp-feat-grid,.lp-roles-grid{grid-template-columns:repeat(2,1fr)}
+  .lp-h1{font-size:40px}
+  .lp-nav{padding:12px 18px}
+}
+@media(max-width:560px){
+  .lp-feat-grid,.lp-roles-grid{grid-template-columns:1fr}
+  .lp-h1{font-size:32px}
+  .lp-stats-grid{grid-template-columns:repeat(2,1fr);gap:12px}
+  .lp-logo-sub,.lp-footer-links{display:none}
+  .lp-subhead{font-size:13px}
+}
+
 </style>
 
 </head>
 <body>
+
+<!-- ═══════════ LANDING PAGE ═══════════ -->
+<div id="landing-screen">
+
+  <!-- NAV -->
+  <nav class="lp-nav">
+    <div class="lp-logo">
+      <div class="lp-logo-icon">🎓</div>
+      <div>
+        <div class="lp-logo-name">N³ SmartSolutions</div>
+        <div class="lp-logo-sub">DBE AI Platform · v2</div>
+      </div>
+    </div>
+    <div class="lp-nav-btns">
+      <button class="lp-btn-ghost" onclick="goToLogin()">Sign In</button>
+      <button class="lp-btn-teal" onclick="goToRegister()">Get Started Free</button>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="lp-hero">
+    <div class="lp-blob1"></div>
+    <div class="lp-blob2"></div>
+    <div class="lp-blob3"></div>
+    <div class="lp-hero-inner">
+      <div class="lp-pill">
+        <span class="lp-pill-dot"></span>
+        <span class="lp-pill-txt">AI-Powered · Built for South Africa</span>
+      </div>
+      <h1 class="lp-h1">
+        Smarter Teaching.<br>
+        <span class="lp-h1-accent">Better Learning.</span>
+      </h1>
+      <p class="lp-subhead">
+        N³ SmartSolutions is an AI-powered marking and tutoring platform for South African educators.
+        Auto-mark maths papers, track every student's progress, and give each learner their own AI tutor — all in one place.
+      </p>
+      <div class="lp-hero-btns">
+        <button class="lp-cta-primary" onclick="goToRegister()">Start for Free →</button>
+        <button class="lp-cta-secondary" onclick="goToLogin()">Already have an account</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <div class="lp-stats">
+    <div class="lp-stats-grid">
+      <div class="lp-stat">
+        <div class="lp-stat-val">7+</div>
+        <div class="lp-stat-lbl">Subjects covered</div>
+      </div>
+      <div class="lp-stat">
+        <div class="lp-stat-val">3</div>
+        <div class="lp-stat-lbl">User roles</div>
+      </div>
+      <div class="lp-stat">
+        <div class="lp-stat-val">AI</div>
+        <div class="lp-stat-lbl">Powered marking</div>
+      </div>
+      <div class="lp-stat">
+        <div class="lp-stat-val">ZA</div>
+        <div class="lp-stat-lbl">Built for Africa</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FEATURES -->
+  <section class="lp-features-wrap">
+    <div class="lp-sec-hd">
+      <div class="lp-sec-title">Everything in one platform</div>
+      <div class="lp-sec-sub">No switching between tools — marking, tutoring, tracking, and reporting all connected and intelligent.</div>
+    </div>
+    <div class="lp-feat-grid">
+      <div class="lp-feat-card" style="--lp-fc:#00e5b4">
+        <div class="lp-feat-ico">🤖</div>
+        <div class="lp-feat-title">AI Auto-Marking</div>
+        <div class="lp-feat-desc">Mark maths and science papers in seconds. Claude AI scores each answer with detailed step-by-step feedback for the student.</div>
+      </div>
+      <div class="lp-feat-card" style="--lp-fc:#a855f7">
+        <div class="lp-feat-ico">🎓</div>
+        <div class="lp-feat-title">Personal AI Tutor</div>
+        <div class="lp-feat-desc">Every student gets 24/7 access to an AI tutor that explains concepts, draws graphs, and works through problems step by step.</div>
+      </div>
+      <div class="lp-feat-card" style="--lp-fc:#f59e0b">
+        <div class="lp-feat-ico">📊</div>
+        <div class="lp-feat-title">Class Analytics</div>
+        <div class="lp-feat-desc">Track performance across your whole class. See exactly where each student struggles and get AI recommendations for intervention.</div>
+      </div>
+      <div class="lp-feat-card" style="--lp-fc:#00e5b4">
+        <div class="lp-feat-ico">🧠</div>
+        <div class="lp-feat-title">SA Curriculum Q-Bank</div>
+        <div class="lp-feat-desc">Thousands of questions aligned to the South African DBE curriculum, organised by grade, subject, topic and difficulty level.</div>
+      </div>
+      <div class="lp-feat-card" style="--lp-fc:#a855f7">
+        <div class="lp-feat-ico">📱</div>
+        <div class="lp-feat-title">Mobile & Desktop</div>
+        <div class="lp-feat-desc">Works on any device — phone, tablet, or laptop. Teachers get a full command-centre dashboard; students get a clean mobile interface.</div>
+      </div>
+      <div class="lp-feat-card" style="--lp-fc:#f59e0b">
+        <div class="lp-feat-ico">📄</div>
+        <div class="lp-feat-title">Smart Reports</div>
+        <div class="lp-feat-desc">Generate parent reports, admin summaries, and progress certificates with one click. Always formatted, always accurate.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ROLES -->
+  <section class="lp-roles-wrap">
+    <div class="lp-sec-hd">
+      <div class="lp-sec-title">Built for everyone in education</div>
+      <div class="lp-sec-sub">Whether you teach, learn, or run a school — N³ SmartSolutions has a role designed just for you.</div>
+    </div>
+    <div class="lp-roles-grid">
+      <div class="lp-role-card rc-teacher">
+        <div class="lp-role-ico">👩‍🏫</div>
+        <div class="lp-role-name">Teachers</div>
+        <ul class="lp-role-pts">
+          <li class="lp-role-pt"><span class="lp-rp-ck">✓</span>Auto-mark submissions in seconds with detailed AI feedback</li>
+          <li class="lp-role-pt"><span class="lp-rp-ck">✓</span>Set assignments, manage classes, and track submission status</li>
+          <li class="lp-role-pt"><span class="lp-rp-ck">✓</span>Get AI-powered reports on class performance and weak areas</li>
+          <li class="lp-role-pt"><span class="lp-rp-ck">✓</span>Build question papers from the SA curriculum Q-Bank</li>
+        </ul>
+      </div>
+      <div class="lp-role-card rc-student">
+        <div class="lp-role-ico">🎓</div>
+        <div class="lp-role-name">Students</div>
+        <ul class="lp-role-pts">
+          <li class="lp-role-pt"><span class="lp-rp-ck">✓</span>Chat with your AI tutor 24/7 — it explains and draws graphs</li>
+          <li class="lp-role-pt"><span class="lp-rp-ck">✓</span>Submit work and get instant, detailed AI feedback</li>
+          <li class="lp-role-pt"><span class="lp-rp-ck">✓</span>See your results and progress across all subjects</li>
+          <li class="lp-role-pt"><span class="lp-rp-ck">✓</span>Get personalised study recommendations from AI</li>
+        </ul>
+      </div>
+      <div class="lp-role-card rc-admin">
+        <div class="lp-role-ico">🛡️</div>
+        <div class="lp-role-name">Administrators</div>
+        <ul class="lp-role-pts">
+          <li class="lp-role-pt"><span class="lp-rp-ck">✓</span>Oversee all classes, teachers, and students in one view</li>
+          <li class="lp-role-pt"><span class="lp-rp-ck">✓</span>Monitor school-wide performance and identify at-risk learners</li>
+          <li class="lp-role-pt"><span class="lp-rp-ck">✓</span>Manage user accounts and control platform access</li>
+          <li class="lp-role-pt"><span class="lp-rp-ck">✓</span>Generate institutional reports for parents and the DBE</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA BANNER -->
+  <section class="lp-cta-wrap">
+    <div class="lp-cta-inner">
+      <div class="lp-cta-title">Ready to transform your classroom?</div>
+      <div class="lp-cta-sub">Create your free account in under a minute. No credit card. No setup. Just smarter teaching from day one.</div>
+      <button class="lp-cta-primary" onclick="goToRegister()">Create Free Account →</button>
+      <div class="lp-cta-note">Already registered? <button onclick="goToLogin()" style="background:none;border:none;color:#00e5b4;font-size:10px;cursor:pointer;font-family:var(--font);letter-spacing:.5px;padding:0;text-decoration:underline">Sign in here</button></div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="lp-footer">
+    <div class="lp-footer-left">
+      <span style="font-size:16px">🎓</span>
+      <span class="lp-footer-name">N³ SmartSolutions — DBE AI Marking Platform · v2</span>
+    </div>
+    <div class="lp-footer-links">
+      <button class="lp-footer-link" onclick="goToLogin()">Sign In</button>
+      <button class="lp-footer-link" onclick="goToRegister()">Register</button>
+    </div>
+    <span class="lp-footer-copy">© 2025 N³ SmartSolutions</span>
+  </footer>
+
+</div>
+<!-- end #landing-screen -->
 
 <!-- ═══════════ AUTH SCREEN ═══════════ -->
 <div id="auth-screen">
@@ -2199,6 +2619,14 @@ function quickLogin(email,pass){
   document.getElementById('auth-email').value=email;
   document.getElementById('auth-pass').value=pass;
   doLogin();
+}
+
+function goToLogin(){
+  document.getElementById('landing-screen').style.display='none';
+}
+function goToRegister(){
+  document.getElementById('landing-screen').style.display='none';
+  showRegister();
 }
 
 function showRegister(){
